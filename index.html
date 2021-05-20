@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border:1px solid #d3d3d3;
+    background-color: #f1f1f1;
+}
+</style>
+</head>
+<body onload="startGame()">
+<script>
+
+var myGamePiece;
+var myScore;
+var p = false;
+var lost = false;
+
+function startGame() {
+	myScore = new component("30px", "Consolas", "black", 280, 40, "text");
+    myGamePiece = new component(10, 10, "red", 235, 50, "circle");
+    myGamePiece.speedY = 1;
+    myGamePiece.speedX = 1;
+    myPlatform = new component(60, 20, "blue", 210, 240,"platform");
+    myGameArea.start();
+}
+
+var myGameArea = {
+    canvas : document.createElement("canvas"),
+    start : function() {
+        this.canvas.width = 480;
+        this.canvas.height = 270;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.points = 0;
+        this.interval = setInterval(updateGameArea, 20);
+        },
+    clear : function() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+}
+
+function component(width, height, color, x, y, type) {
+    this.type = type;
+    this.score = 0;
+    this.width = width;
+    this.height = height;
+    this.speedX = 0;
+    this.speedY = 0;    
+    this.x = x;
+    this.y = y;
+    this.gravity = 0;
+    this.update = function() {
+        ctx = myGameArea.context;
+        if (this.type == "text") {
+            ctx.font = this.width + " " + this.height;
+            ctx.fillStyle = color;
+            ctx.fillText(this.text, this.x, this.y);
+        } else if(this.type == "circle") {
+        	ctx.fillStyle = color;
+            ctx.beginPath();
+    		ctx.arc(this.x, this.y, this.width, 0, 2*Math.PI);
+    		ctx.fill();
+        } else {
+            ctx.fillStyle = color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+    }
+    this.newPos = function() {
+ 		if(type == "platform"){
+          if(this.x <= 0){
+          	this.x = 0;
+          }
+          else if(this.x >= myGameArea.canvas.width - this.width){
+          	this.x = myGameArea.canvas.width - this.width
+          }
+        }
+        this.x += this.speedX;
+        this.y+=this.speedY;
+    }
+    
+    this.hitPlatform = function() {
+    	pX = this.x+(this.width/2)
+        pY = this.y+(this.height)
+        
+        if(pX>=myPlatform.x && pX<=myPlatform.x+myPlatform.width && pY == myPlatform.y){
+        	myGameArea.points += 1;
+        	this.speedY = -this.speedY;
+            this.speedX = this.speedX;
+        }
+  	}
+    
+    this.hitWall = function() {
+    	leftX = this.x;
+        leftY = this.y+(this.width)/2;
+        rightX = this.x+this.width;
+        rightY = leftY;
+        upX = this.x+(this.height)/2;
+        upY = this.y;
+        downX = upX;
+        downY = this.y+this.height;
+        
+        if(upX>=0 && upX <=myGameArea.canvas.width && upY <= 10){
+        	this.speedX = this.speedX;
+            this.speedY = -this.speedY;
+        }
+        else if(leftY>= 0 && leftY <= myGameArea.canvas.height && leftX <= 10){
+        	this.speedX = -this.speedX;
+            this.speedY = this.speedY;
+        }
+        else if(rightY>=0&&rightY<=myGameArea.canvas.height&&rightX>=myGameArea.canvas.width){
+        	this.speedX = -this.speedX;
+            this.speedY = this.speedY;
+        }else if(downX>=0 && downX <=myGameArea.canvas.width && downY >= myGameArea.canvas.height){
+            lost = true;
+            lost_txt = new component("80px", "Consolas", "Red", 60, 160, "text");
+            lost_txt.text = "YOU LOST";
+            lost_txt.update();
+        }
+        
+    }
+}
+
+function stopmove(){
+  myPlatform.speedX = 0;
+}
+
+function moveleft() {
+  myPlatform.speedX -= 3;
+}
+
+function moveright() {
+  myPlatform.speedX += 3;
+}
+
+function pause() {
+	p = !p;
+}
+
+function updateGameArea() {
+	
+    if(!p && !lost){
+    
+      myGameArea.clear();
+
+      myScore.text="SCORE: " + myGameArea.points;
+      myScore.update();
+      myGamePiece.newPos();
+      myGamePiece.hitPlatform();
+      myGamePiece.hitWall();
+      myGamePiece.update();
+      myPlatform.newPos();
+      myPlatform.update();
+    }
+}
+
+</script>
+<br>
+<button onmousedown="moveleft()" onmouseup="stopmove()" ontouchstart="moveleft()">LEFT</button>
+<button onmousedown="moveright()" onmouseup="stopmove()" ontouchstart="moveright()">RIGHT</button>
+<button onclick="pause()">PAUSE</button>
+<p>Arcanoid 0.1</p>
+</body>
+</html>
